@@ -3,6 +3,7 @@ name: Qatar Airways prices
 on:
   workflow_dispatch:
   schedule:
+    # 07:00 UTC = 10:00 Moscow time
     - cron: "0 7 * * *"
 
 concurrency:
@@ -50,7 +51,7 @@ jobs:
           CITY: ${{ matrix.city }}
           MAX_WORKERS: "2"
           SEARCH_TIMEOUT_MS: "45000"
-        run: python agent_v2.py
+        run: python agent_v3.py
 
       - name: Upload debug artifacts
         if: always()
