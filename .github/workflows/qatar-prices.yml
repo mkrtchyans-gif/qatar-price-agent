@@ -50,12 +50,25 @@ jobs:
           CITY: ${{ matrix.city }}
           SEARCH_TIMEOUT_MS: "45000"
           DIAGNOSTIC_ONLY: "1"
-        run: python agent_v5.py
+        run: python agent_v6.py
+
+      - name: List diagnostics before upload
+        if: always()
+        run: |
+          mkdir -p artifacts
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "Artifacts directory:"
+          find "$GITHUB_WORKSPACE/artifacts" -maxdepth 2 -type f -printf '%p (%s bytes)\n' | sort || true
+
+          if ! find "$GITHUB_WORKSPACE/artifacts" -type f -print -quit | grep -q .; then
+            echo "No diagnostic files were created by Python." > "$GITHUB_WORKSPACE/artifacts/upload_debug.txt"
+            echo "Current directory: $(pwd)" >> "$GITHUB_WORKSPACE/artifacts/upload_debug.txt"
+          fi
 
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qatar-diagnostics-${{ matrix.city }}
-          path: artifacts/
-          if-no-files-found: warn
+          path: ${{ github.workspace }}/artifacts
+          if-no-files-found: error
