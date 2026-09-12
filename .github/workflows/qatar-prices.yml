@@ -15,7 +15,9 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        city: [Boston, "Los Angeles"]
+        city:
+          - Boston
+          - Los Angeles
 
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -52,24 +54,36 @@ jobs:
           DIAGNOSTIC_ONLY: "1"
         run: python agent_v6.py
 
-      - name: List diagnostics before upload
+      - name: Collect diagnostics
         if: always()
         run: |
-          mkdir -p artifacts
-          echo "Workspace: $GITHUB_WORKSPACE"
-          echo "Artifacts directory:"
-          find "$GITHUB_WORKSPACE/artifacts" -maxdepth 2 -type f -printf '%p (%s bytes)\n' | sort || true
+          mkdir -p "$RUNNER_TEMP/qatar-diagnostics"
 
-          if ! find "$GITHUB_WORKSPACE/artifacts" -type f -print -quit | grep -q .; then
-            echo "No diagnostic files were created by Python." > "$GITHUB_WORKSPACE/artifacts/upload_debug.txt"
-            echo "Current directory: $(pwd)" >> "$GITHUB_WORKSPACE/artifacts/upload_debug.txt"
+          echo "Searching for diagnostic files..."
+
+          found=0
+
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              cp "$file" "$RUNNER_TEMP/qatar-diagnostics/"
+              found=1
+              echo "Collected: $file"
+            fi
+          done < <(find "$GITHUB_WORKSPACE" -type f -path "*/artifacts/*")
+
+          if [ "$found" -eq 0 ]; then
+            echo "No diagnostic files were found." > "$RUNNER_TEMP/qatar-diagnostics/upload_debug.txt"
+            echo "Workspace: $GITHUB_WORKSPACE" >> "$RUNNER_TEMP/qatar-diagnostics/upload_debug.txt"
+            find "$GITHUB_WORKSPACE" -maxdepth 5 -type f | sort >> "$RUNNER_TEMP/qatar-diagnostics/upload_debug.txt"
           fi
 
-            - name: Upload diagnostics
+          echo "Final diagnostic directory:"
+          ls -lah "$RUNNER_TEMP/qatar-diagnostics"
+
+      - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qatar-diagnostics-${{ matrix.city }}
-          path: |
-            ${{ github.workspace }}/**/artifacts/**
+          path: ${{ runner.temp }}/qatar-diagnostics
           if-no-files-found: error
