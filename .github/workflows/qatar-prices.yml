@@ -18,7 +18,7 @@ jobs:
         city: [Boston, "Los Angeles"]
 
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -42,20 +42,20 @@ jobs:
           printf '%s' "$GOOGLE_SERVICE_ACCOUNT_JSON" > service_account.json
           chmod 600 service_account.json
 
-      - name: Run agent
+      - name: Run diagnostic agent
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: service_account.json
           HEADLESS: "1"
           CITY: ${{ matrix.city }}
-          MAX_WORKERS: "2"
           SEARCH_TIMEOUT_MS: "45000"
-        run: python agent_v4.py
+          DIAGNOSTIC_ONLY: "1"
+        run: python agent_v5.py
 
-      - name: Upload debug artifacts
+      - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qatar-debug-${{ matrix.city }}
+          name: qatar-diagnostics-${{ matrix.city }}
           path: artifacts/
-          if-no-files-found: ignore
+          if-no-files-found: warn
