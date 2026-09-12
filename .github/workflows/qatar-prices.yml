@@ -65,10 +65,11 @@ jobs:
             echo "Current directory: $(pwd)" >> "$GITHUB_WORKSPACE/artifacts/upload_debug.txt"
           fi
 
-      - name: Upload diagnostics
+            - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qatar-diagnostics-${{ matrix.city }}
-          path: ${{ github.workspace }}/artifacts
+          path: |
+            ${{ github.workspace }}/**/artifacts/**
           if-no-files-found: error
