@@ -1,14 +1,24 @@
 name: Qatar Airways prices
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 7 * * *"
-  workflow_dispatch:
+
+concurrency:
+  group: qatar-price-check
+  cancel-in-progress: false
 
 jobs:
   check-prices:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        city: [Boston, "Los Angeles"]
+
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -25,15 +35,27 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps chromium
 
-      - name: Create Google credentials file
+      - name: Write Google credentials
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
           printf '%s' "$GOOGLE_SERVICE_ACCOUNT_JSON" > service_account.json
+          chmod 600 service_account.json
 
       - name: Run agent
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: service_account.json
           HEADLESS: "1"
+          CITY: ${{ matrix.city }}
+          MAX_WORKERS: "2"
+          SEARCH_TIMEOUT_MS: "45000"
         run: python agent_v2.py
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qatar-debug-${{ matrix.city }}
+          path: artifacts/
+          if-no-files-found: ignore
