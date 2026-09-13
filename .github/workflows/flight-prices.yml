@@ -42,9 +42,15 @@ jobs:
           TP_TOKEN: ${{ secrets.TP_TOKEN }}
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: service_account.json
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           CITY: ${{ matrix.city }}
+          AIRLINE_FILTER: "QR"
+          ALERT_DROP_PCT: "15"
+          ADULTS: "3"
+          CHILDREN: "1"
+          CHILD_RATIO: "0.75"
           CURRENCY: usd
           MARKET: ru
-          AIRLINE_FILTER: "QR"
           MAX_STOPS: "2"
         run: python main.py
