@@ -45,6 +45,6 @@ jobs:
           CITY: ${{ matrix.city }}
           CURRENCY: usd
           MARKET: ru
-          AIRLINE_FILTER: ""
+          AIRLINE_FILTER: "QR"
           MAX_STOPS: "2"
         run: python main.py
